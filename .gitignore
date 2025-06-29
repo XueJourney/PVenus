@@ -209,5 +209,11 @@ __marimo__/
 
 tmp
 temp
-*.json
+# Ignore only temporary or specific JSON files, not all JSON files
+tmp/*.json
+temp/*.json
+data/
+config.json
+chat_history.json
+# Add more specific patterns as needed
 *.mp3
