@@ -146,7 +146,8 @@ class FileProcessor:
                         ]
                     }
                 ],
-                max_tokens=1000
+                max_tokens=1000,
+                timeout=60
             )
             
             return response.choices[0].message.content
@@ -439,8 +440,8 @@ class AIChat:
         saved_config = self.config_manager.load_config()
         if saved_config:
             print("发现已保存的配置:")
-            print(f"SiliconFlow Key: {'*' * (len(saved_config['siliconflow_key']) - 4) + saved_config['siliconflow_key'][-4:]}")
-            print(f"OpenAI Key: {'*' * (len(saved_config['openai_key']) - 4) + saved_config['openai_key'][-4:]}")
+            print(f"SiliconFlow Key: {'*' * 8} (已配置)")
+            print(f"OpenAI Key: {'*' * 8} (已配置)")
             print(f"API网关: {saved_config['openai_api_gateway']}")
             
             use_saved = input("是否使用已保存的配置？(y/n): ").strip().lower()
@@ -627,7 +628,8 @@ class AIChat:
                         model="gpt-4o",
                         messages=[{"role": "user", "content": prompt}],
                         response_format={"type": "json_object"},
-                        max_tokens=2000
+                        max_tokens=2000,
+                        timeout=120
                     )
                     
                     ai_response_text = response.choices[0].message.content
@@ -658,11 +660,11 @@ class AIChat:
                     break
                 except Exception as e:
                     logger.error(f"处理用户输入时出错: {e}")
-                    print(f"出现错误: {e}")
+                    print("出现错误，请查看日志获取详情。")
                     
         except Exception as e:
             logger.error(f"程序运行出错: {e}")
-            print(f"程序出现严重错误: {e}")
+            print("程序出现严重错误，请查看日志获取详情。")
 
 def main():
     chat = AIChat()

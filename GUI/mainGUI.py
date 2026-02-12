@@ -640,7 +640,7 @@ class App(ctk.CTk):
                 self.memory_manager,
                 self.chat_history
             )
-            logger.debug(f"构建的完整提示词:\n---\n{prompt}\n---")
+            logger.debug(f"构建的提示词长度: {len(prompt)} 字符")
 
             request_payload = {
                 "model": "gpt-4o",
@@ -648,7 +648,7 @@ class App(ctk.CTk):
                 "response_format": {"type": "json_object"},
                 "max_tokens": 2000
             }
-            logger.debug(f"发送到 OpenAI 的请求体:\n{json.dumps(request_payload, ensure_ascii=False, indent=2)}")
+            logger.debug(f"请求模型: {request_payload['model']}, max_tokens: {request_payload['max_tokens']}")
 
             logger.info("正在向 OpenAI 发送请求...")
             response = self.openai_client.chat.completions.create(
@@ -656,19 +656,19 @@ class App(ctk.CTk):
             )
             logger.info("已收到 OpenAI 的回复。")
             ai_response_text = response.choices[0].message.content
-            logger.debug(f"从 OpenAI 收到的原始回复:\n{ai_response_text}")
+            logger.debug(f"收到 OpenAI 回复，长度: {len(ai_response_text)} 字符")
 
             self.after(0, self.process_ai_response, ai_response_text, user_text)
         except Exception as e:
             logger.error(f"消息处理线程出错: {e}", exc_info=True)
-            self.after(0, lambda: self.add_message_to_chatbox("错误", str(e)))
+            self.after(0, lambda: self.add_message_to_chatbox("错误", "处理消息时出错，请查看日志。"))
             self.after(0, self.set_input_state, "normal")
 
 
     def process_ai_response(self, ai_response_text, original_user_input):
         """处理并显示AI的回复"""
         try:
-            logger.debug(f"开始处理AI回复JSON: {ai_response_text}")
+            logger.debug(f"开始处理AI回复JSON，长度: {len(ai_response_text)} 字符")
             response_data = json.loads(ai_response_text)
             display_response = response_data.get("response", "AI回复格式错误，请检查日志。")
 

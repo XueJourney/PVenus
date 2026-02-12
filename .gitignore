@@ -212,8 +212,10 @@ temp
 # Ignore only temporary or specific JSON files, not all JSON files
 tmp/*.json
 temp/*.json
-data/
 config.json
 chat_history.json
+memory.json
+logs/
+data/
 # Add more specific patterns as needed
 *.mp3
