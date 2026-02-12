@@ -217,5 +217,6 @@ chat_history.json
 memory.json
 logs/
 data/
+app.log
 # Add more specific patterns as needed
 *.mp3

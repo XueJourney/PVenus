@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+import stat
 import base64
 import hashlib
 from datetime import datetime
@@ -48,6 +49,11 @@ file_handler = logging.FileHandler("logs/app.log", encoding="utf-8")
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
+# 限制日志文件权限
+try:
+    os.chmod("logs/app.log", stat.S_IRUSR | stat.S_IWUSR)
+except OSError:
+    pass
 
 
 # --- 核心逻辑类 (从CLI版本迁移并适配) ---
@@ -61,11 +67,19 @@ class ConfigManager:
         self.chat_history_file = os.path.join(self.config_dir, "chat_history.json")
         os.makedirs(self.config_dir, exist_ok=True)
 
+    def _secure_write(self, filepath, data):
+        """安全写入文件，限制文件权限为仅当前用户可读写"""
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            os.chmod(filepath, stat.S_IRUSR | stat.S_IWUSR)  # 600 权限
+        except OSError as e:
+            logger.error(f"安全写入文件失败 {filepath}: {e}")
+
     def save_config(self, config):
         """保存配置到本地文件"""
         try:
-            with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(config, f, ensure_ascii=False, indent=2)
+            self._secure_write(self.config_file, config)
             logger.debug("配置已保存到本地")
         except Exception as e:
             logger.error(f"保存配置失败: {e}")
@@ -83,8 +97,7 @@ class ConfigManager:
     def save_memory(self, memory):
         """保存永久记忆"""
         try:
-            with open(self.memory_file, 'w', encoding='utf-8') as f:
-                json.dump(memory, f, ensure_ascii=False, indent=2)
+            self._secure_write(self.memory_file, memory)
             logger.debug("记忆已保存")
         except Exception as e:
             logger.error(f"保存记忆失败: {e}")
@@ -103,8 +116,7 @@ class ConfigManager:
         """保存聊天记录"""
         try:
             recent_history = history[-20:] if len(history) > 20 else history
-            with open(self.chat_history_file, 'w', encoding='utf-8') as f:
-                json.dump(recent_history, f, ensure_ascii=False, indent=2)
+            self._secure_write(self.chat_history_file, recent_history)
             logger.debug("聊天记录已保存")
         except Exception as e:
             logger.error(f"保存聊天记录失败: {e}")
@@ -132,6 +144,10 @@ class FileProcessor:
     def encode_image_to_base64(self, image_path):
         """将图片编码为base64"""
         try:
+            file_size = os.path.getsize(image_path)
+            if file_size > 20 * 1024 * 1024:  # 20MB 限制
+                logger.error(f"图片文件过大 ({file_size} bytes)，最大支持 20MB")
+                return None
             with open(image_path, "rb") as image_file:
                 return base64.b64encode(image_file.read()).decode('utf-8')
         except Exception as e:
